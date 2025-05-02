@@ -227,10 +227,16 @@ def process_off_files(directory):
             # Determine the number of real cusps
             num_real_cusps = determine_real_cusps(local_maxima)
 
-            # Write output
-            tooth_id = os.path.splitext(filename)[0].split('_')[1]
+            # Determine the tooth ID
+            base_name = os.path.splitext(filename)[0]
+            if '9_' in base_name:
+                tooth_id = base_name.split('9_', 1)[1]
+            else:
+                tooth_id = base_name  # fallback to whole name
+
             fails_inhib = "FAILS" if not passes_inhibitory_cascade else ""
-            output_line = f"{tooth_id}\t{angle_radians}\t{angle_degrees}\t{num_real_cusps}\t{fails_inhib}\n"
+            notes = "" #Placeholder for the NOTES field
+            output_line = f"{tooth_id}\t{angle_radians}\t{angle_degrees}\t{notes}\t{num_real_cusps}\t{fails_inhib}\n"
             full_batch_out.write(output_line)
 
             # Write to specific cusp file
@@ -260,7 +266,7 @@ def process_off_files(directory):
 # Example usage
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 git5Z_batch.py <directory>")
+        print("Usage: python3 git5Z_batch_mut.py <directory>")
         sys.exit(1)
 
     directory = sys.argv[1]
