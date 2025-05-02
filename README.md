@@ -1,6 +1,6 @@
 # tooth-evo-devo
 
-Code steps:
+Code steps to generate uniform random sampling of teeth using OPCR and cusp counts as the measurement for complexity (figures 3a & 4a):
 1. python3 lhs.py 19000     # This will generate 19000 input .txt files using Latin Hypercube Sampling of the variable genetic and cellular parameters in ToothMaker
 2. cp runt.e ./19000_input_files     #This will copy runt.e into the subdirectory with the input .txt files
 3. python3 make_off_multi.py ./19000_input_files ./19000_input_files     #this makes a "multirun" code to run to generate 19000 teeth in the cluster 
