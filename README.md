@@ -16,7 +16,9 @@ Code steps to generate uniform random sampling of teeth using OPCR and cusp coun
 13.  (copy the following files to ./outputs_ply : calc_opc.py, topomesh.py, plython.py, DNE.py, implicitfair.py, normcore.py, OPC.py, RFI.py, 1opc.py, run_opc.py)
 14.  python3 run_opc.py    #this will generate a .txt file called commands_opc.txt, which is a command to calculate the opc for each .ply tooth file in an efficient manner
 15.  addqueue -c "5 minutes" -n 100 /usr/local/shared/bin/multirun ./commands_opc.txt    #this will calculate the OPC values for all the .ply files in the directory and save them in /opc
-16.  
+16.  ls *.txt -1 | wc -l    #running this inside ./opc will allow you to monitor progress, speicifically how many ./opc values have been calculated.
+17.  cp extract_opc.py ./outputs_ply    #copy extract_opc.py into the correct folder for its use
+18.  python3 extract_opc.py ./opc    #this will extract the OPC values from the .txt files and save them in a new directory called opc_vals
 
 #check_height
 This script processes all .off files in the current directory, checks the height (difference between the maximum and minimum z-coordinates) of each file, and classifies them as either "tall enough" or "too flat" based on a threshold of 0.5. The results are written to two separate output files: 18985_tall_enough.txt and 18985_too_flat.txt. If the file is not in the correct OFF or COFF format, an error is raised.
