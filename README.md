@@ -22,8 +22,3 @@ Code steps to generate uniform random sampling of teeth using OPCR and cusp coun
 19.  cd ./19000_input_files    #navigate to directory where .off files are stored
 20.  cp count_cusp_off.py into ./19000_input_files    #ensure code to count cusps of the .off files is in the correct directory
 21.  python3 counting_cusps.py ./19000_input_files     #running this will create a new subdirectory called ./z_batch_results. In this directory, three text files will be generated: 1)z_full_batch_out.txt, which contains a full summary of each tooth .off file, including: File ID (from the filename), Angle in radians and degrees between a primary cusp (cusp A, the one closest to the origin) and its immediate neighbors (to the left and right in X), Notes (such as 'Missing B and/or C cusp' or angle issues), Number of real cusps detected, Whether it failed the inhibitory cascade test (whether other cusps are lower than cusp A in Z.). 2) angles.txt, which contains the same fields as above but is used to focus on successfully calculated angles.. 3) fails.txt, which contains records of files that had issues, such as: Missing neighboring cusps, Invalid angles, Failures in the inhibitory cascade test.
-
-
-#check_height
-This script processes all .off files in the current directory, checks the height (difference between the maximum and minimum z-coordinates) of each file, and classifies them as either "tall enough" or "too flat" based on a threshold of 0.5. The results are written to two separate output files: 18985_tall_enough.txt and 18985_too_flat.txt. If the file is not in the correct OFF or COFF format, an error is raised.
-
