@@ -26,3 +26,8 @@ Code steps to generate uniform random sampling of teeth using OPCR and cusp coun
 24.  python3 combine_opc_cusp.py seal_lhs_opc_list.txt z_full_batch_out.txt     #this will combine the opc and cusp data into a single data file which can be plotted and further analyzed
 
 To filter teeth by flat-ness, run python3 check_height.py inside the directory containing .off files.
+
+Code steps to generate mutant teeth from parent tooth using OPCR and cusp counts as the measurement for complexity (figures 3b-c & 4b-c):
+1. python3 mut.py P4.txt     #Beginning with parent tooth (for example) P4.txt, this will generate 19000 mutant txt files within specific ranges (see mut.py to alter these ranges)
+2. 
+
