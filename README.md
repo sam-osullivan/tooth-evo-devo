@@ -28,6 +28,14 @@ Code steps to generate uniform random sampling of teeth using OPCR and cusp coun
 To filter teeth by flat-ness, run python3 check_height.py inside the directory containing .off files.
 
 Code steps to generate mutant teeth from parent tooth using OPCR and cusp counts as the measurement for complexity (figures 3b-c & 4b-c):
-1. python3 mut.py P4.txt     #Beginning with parent tooth (for example) P4.txt, this will generate 19000 mutant txt files within specific ranges (see mut.py to alter these ranges)
-2. 
-
+1. python3 mut.py P4.txt     #Beginning with parent tooth (for example) P4.txt, this will generate 19000 mutant txt files within specific ranges (see mut.py to alter these ranges) inside ./mutants
+2. python3 make_off_multi.py ./mutants/ ./mutants/      #this will generate a multirun input file to generate teeth in the cluster
+3. copy ./runt.e , ./convert.off.to.ply.py , and ./count_cusp_off into ./mutants
+4. (if needed) find . -type f -name 'multirun.txt' -exec sed -i '/\.\/runt\.e \.\/multirun\.txt \. multirun 5900 1/d' {} +     #this removes the last line of the multirun input file, which says ./runt.e ./multirun.txt . multirun 5000 1
+5. chmod +x multirun.txt
+6. addqueue -n 33 /usr/local/shared/bin/multirun ./multirun.txt      #this will submit the job to the cluster to generate all the .off files inside 16000_input_files, to monitor when each folder has 16000 .off files
+7. ls -1 ./*.off | wc -l      #this will tell you how many .off files were generated
+8. python3 convert.off.to.ply.py .      #this will convert all the .off files into .ply files
+9. (copy the following files to ./outputs_ply : calc_opc.py, topomesh.py, plython.py, DNE.py, implicitfair.py, normcore.py, OPC.py, RFI.py, 1opc.py, run_opc.py)
+10. python3 run_opc.py    #this will generate a .txt file called commands_opc.txt, which is a command to calculate the opc for each .ply tooth file in an efficient manner
+####From here, continue with step #15 above####
