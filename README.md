@@ -41,3 +41,9 @@ Code steps to generate mutant teeth from parent tooth using OPCR and cusp counts
 9. (copy the following files to ./outputs_ply : calc_opc.py, topomesh.py, plython.py, DNE.py, implicitfair.py, normcore.py, OPC.py, RFI.py, 1opc.py, run_opc.py)
 10. python3 run_opc.py    #this will generate a .txt file called commands_opc.txt, which is a command to calculate the opc for each .ply tooth file in an efficient manner
 ####From here, continue with step #15 above####
+
+This project builds on the original ToothMaker computational model of tooth development, developed by Salazar-Ciudad & Jernvall:
+
+Salazar-Ciudad I, Jernvall J. A computational model of teeth and the developmental origins of morphological variation. Nature. 2010 Mar 25;464(7288):583–586. https://doi.org/10.1038/nature08838
+
+If you use this code or model in your work, please cite the original paper.
