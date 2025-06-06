@@ -5,7 +5,7 @@ Code steps to generate uniform random sampling of teeth using OPCR and cusp coun
 0. gfortran -O2 -w new_humppa_translate2.f90 -o runt.e
 1. python3 lhs.py 19000     # This will generate 19000 input .txt files using Latin Hypercube Sampling of the variable genetic and cellular parameters in ToothMaker
 2. cp runt.e ./19000_input_files     #This will copy runt.e into the subdirectory with the input .txt files
-3. python3 make_off_multi.py ./19000_input_files ./19000_input_files     #this makes a "multirun" code to run to generate 19000 teeth in the cluster 
+3. python3 make_off_multi.py ./19000_input_files ./19000_input_files     #this makes a "multirun" code to run to generate 19000 teeth in the cluster. If you only want to generate a single tooth you can simply run "./runt.e ./1.txt . ./1 9000 1"
 4. cd ./19000_input_files #navigate to directory with input files
 5. sed -i '/\.\/runt\.e \.\/multirun\.txt \. multirun 9000 1/d' multirun.txt     #this deletes the last line of the multirun file, if neccessary, which may say ./runt.e ./multirun.txt . multirun 5000 1 in multirun.txt
 6. addqueue -n 50 /usr/local/shared/bin/multirun ./multirun.txt     #for running calculations on a cluster, this will generate all the tooth .off files inside ./19000_input_files
