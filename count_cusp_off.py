@@ -176,6 +176,17 @@ def determine_real_cusps(cusps, threshold=0.1):
 
     return len(real_cusps)
 
+# Function to format cusp coordinates for output
+def format_cusp_coordinates(cusps):
+    if not cusps:
+        return ""
+    
+    formatted_cusps = []
+    for cusp in cusps:
+        formatted_cusps.append(f"({cusp[0]:.6f},{cusp[1]:.6f},{cusp[2]:.6f})")
+    
+    return ";".join(formatted_cusps)
+
 # Main function to process the .off files in a directory and generate the output file
 def process_off_files(directory):
     # Create a subdirectory for results
@@ -189,9 +200,9 @@ def process_off_files(directory):
     cusp_files = {}
 
     # Write headers
-    full_batch_out.write("ID\tRADIANS\tDEGREES\tNOTES\tREAL CUSPS\tFAILS INHIB?\n")
-    angles_out.write("ID\tRADIANS\tDEGREES\tNOTES\tREAL CUSPS\tFAILS INHIB?\n")
-    fails_out.write("ID\tRADIANS\tDEGREES\tNOTES\tREAL CUSPS\tFAILS INHIB?\n")
+    full_batch_out.write("ID\tRADIANS\tDEGREES\tNOTES\tREAL CUSPS\tFAILS INHIB?\tCUSP COORDINATES\n")
+    angles_out.write("ID\tRADIANS\tDEGREES\tNOTES\tREAL CUSPS\tFAILS INHIB?\tCUSP COORDINATES\n")
+    fails_out.write("ID\tRADIANS\tDEGREES\tNOTES\tREAL CUSPS\tFAILS INHIB?\tCUSP COORDINATES\n")
 
     for filename in os.listdir(directory):
         if filename.endswith(".off"):
@@ -227,6 +238,9 @@ def process_off_files(directory):
             # Determine the number of real cusps
             num_real_cusps = determine_real_cusps(local_maxima)
 
+            # Format cusp coordinates
+            cusp_coordinates = format_cusp_coordinates(cusps)
+
             # Determine the tooth ID
             base_name = os.path.splitext(filename)[0]
             if '9_' in base_name:
@@ -236,14 +250,14 @@ def process_off_files(directory):
 
             fails_inhib = "FAILS" if not passes_inhibitory_cascade else ""
             notes = "" #Placeholder for the NOTES field
-            output_line = f"{tooth_id}\t{angle_radians}\t{angle_degrees}\t{notes}\t{num_real_cusps}\t{fails_inhib}\n"
+            output_line = f"{tooth_id}\t{angle_radians}\t{angle_degrees}\t{notes}\t{num_real_cusps}\t{fails_inhib}\t{cusp_coordinates}\n"
             full_batch_out.write(output_line)
 
             # Write to specific cusp file
             cusp_file_name = os.path.join(results_dir, f"{num_real_cusps}_cusp.txt")
             if cusp_file_name not in cusp_files:
                 cusp_files[cusp_file_name] = open(cusp_file_name, 'w')
-                cusp_files[cusp_file_name].write("ID\tRADIANS\tDEGREES\tNOTES\tREAL CUSPS\tFAILS INHIB?\n")
+                cusp_files[cusp_file_name].write("ID\tRADIANS\tDEGREES\tNOTES\tREAL CUSPS\tFAILS INHIB?\tCUSP COORDINATES\n")
             cusp_files[cusp_file_name].write(output_line)
 
             # Write to angles file if angle is calculated
