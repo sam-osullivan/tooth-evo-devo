@@ -21,6 +21,9 @@ def parse_arguments():
     parser.add_argument('--exe', default="./newrunt.e", help='Path to the Fortran binary (default: ./newrunt.e)')
     parser.add_argument('--steps', type=int, default=9000, help='Number of simulation steps (default: 9000)')
     parser.add_argument('--rand_output', default="random_tooth.txt", help='Output filename (default: random_tooth.txt)')
+    parser.add_argument('--jitter', type=bool, default=True, help='Use jitter method (default: True)')
+    parser.add_argument('r_jitter', type=int, default=5, help='Number of replicas per evaluation (default: 5)')
+    parser.add_argument('sigma_rel', type=float, default=5e-3, help='Sigma relative (default: 5e-3)')
     return parser.parse_args()
 
 # Parse command line arguments
@@ -161,27 +164,61 @@ def run_once(input_file) -> np.ndarray:
 # 3.  Light-weight geometry features
 # ---------------------------------------------------------------------
 
+# --- Smoothed cusp & face complexity ---
+
+
+##cusps are not particularly great as a measure, let's switch to the number of faces
+##also not convinced that this makes sense
+def _soft_cusp_count(cusp_heights: np.ndarray) -> float:
+    """Return a **continuous** surrogate for the number of cusps.
+
+    Each cusp contributes a weight between 0 and 1 using a logistic
+    transfer-function centred at the median height.  This makes the
+    value differentiable with respect to vertex heights (and therefore
+    model parameters).
+    """
+    if cusp_heights.size == 0:
+        return 0.0
+
+    # Threshold (tau) is the median cusp height; width (kappa) is 10 % of the range
+    tau   = float(np.median(cusp_heights))
+    kappa = 0.1 * float(np.ptp(cusp_heights) + 1e-6)
+
+    weights = 1.0 / (1.0 + np.exp(-(cusp_heights - tau) / kappa))
+    return float(np.sum(weights))
+
+
+##this doesn't work yet because everything is discrete
 def extract_features(vertices, faces):
-    cusps      = find_cusps(vertices, faces)
-    z_verts    = -np.array(vertices)[:,2]      # height field
-    cusp_h     = -np.array(cusps)[:,2] if len(cusps) else np.array([np.nan])
+    # ---- cusps ----
+    cusps = find_cusps(vertices, faces)
+    cusp_heights = -np.asarray(cusps)[:, 2] if len(cusps) else np.empty(0)
+    soft_cusps   = _soft_cusp_count(cusp_heights)
 
-    # --- concrete features ---
-    ang, _deg  = get_angle(*get_individual_cusps(cusps))
-    mean_h     = np.nanmean(cusp_h)
-    std_h      = np.nanstd(cusp_h)
-    max_h      = np.nanmax(z_verts)
-    pair_d     = [np.linalg.norm(cusps[i][:2]-cusps[j][:2])
-                  for i in range(len(cusps)) for j in range(i+1,len(cusps))]
-    mean_pair  = np.nan if not pair_d else float(np.mean(pair_d))
-    bbox       = np.ptp(np.array(vertices)[:,:2], axis=0)   # [Δx , Δy]
+    # ---- faces ----
+    face_count = float(len(faces))
+    return np.array([face_count], dtype=float)
 
-    vec = np.array([ang,
-                     mean_h, std_h, max_h,
-                     mean_pair,
-                     bbox[0], bbox[1]],
-                     dtype=float)
-    return np.nan_to_num(vec, nan=0.0, posinf=0.0, neginf=0.0)
+# --- parameters ---------------------------------
+R_JITTER   = 5       # replicas per evaluation
+SIGMA_REL  = 5e-6       # 0.5 % relative noise
+
+def run_with_features(theta_vec: np.ndarray, jitter: bool = True) -> np.ndarray:
+    """Return expectation of the feature vector under Gaussian jitter."""
+    acc = 0.0
+    if jitter:
+        for _ in range(R_JITTER):
+            theta_pert = theta_vec + rng.normal(scale=SIGMA_REL * np.maximum(1.0, np.abs(theta_vec)))
+            generate_toothmaker_file(theta_pert, "temp_theta.txt")
+            verts, faces = run_once("temp_theta.txt")
+            acc += len(faces)
+        acc = acc / R_JITTER
+    else:
+        generate_toothmaker_file(theta_vec, "temp_theta.txt")
+        verts, faces = run_once("temp_theta.txt")
+        acc = len(faces)
+
+    return np.array([acc], dtype=float)
 
 
 # ---------------------------------------------------------------------
@@ -189,7 +226,7 @@ def extract_features(vertices, faces):
 # ---------------------------------------------------------------------
 EPS_REL = 1e-6
 EPS_ABS = 1e-8
-rng     = np.random.default_rng(21)
+rng     = np.random.default_rng(42)
 
 def calculate_jacobian(theta0, y0):
     M, P = y0.size, FREE.size
@@ -200,15 +237,11 @@ def calculate_jacobian(theta0, y0):
         th_p, th_m = theta0.copy(), theta0.copy()
         th_p[k] += eps;  th_m[k] -= eps
 
-    #     print(f"param {PARAM_NAMES[k]:35s} deviations")
-    #     print(th_p)=
-    #     print(th_m)
-        ##generate a bunch of temporary files for the finite differences
-        ##could probably wrap this more elegantly
-        generate_toothmaker_file(th_p, "temp_theta_p.txt")
-        generate_toothmaker_file(th_m, "temp_theta_m.txt")
-        y_p = extract_features(*run_once("temp_theta_p.txt"))
-        y_m = extract_features(*run_once("temp_theta_m.txt"))
+        y_p = run_with_features(th_p)
+        y_m = run_with_features(th_m)
+
+        ##alternative where we don't use the jitter method
+
         J[:,j] = (y_p - y_m)/(2*eps)
         print(f"param {PARAM_NAMES[k]:35s}  done")
 
@@ -218,23 +251,26 @@ def calculate_jacobian(theta0, y0):
 
 
 
-
-
-
 def main():
     # ---- sample one genotype ------------------------- 
     if args.filename:
         theta0 = parse_theta_from_file(args.filename)
         y0 = extract_features(*run_once(args.filename))
+        yN = run_with_features(theta0)
 
     else:
         theta0 = generate_random_theta()
         generate_toothmaker_file(theta0, args.rand_output)
         y0 = extract_features(*run_once(args.rand_output))
+        yN = run_with_features(theta0)
+
     
     J, H, w = calculate_jacobian(theta0, y0)
-    print("Features:")
+
+    print("True Features:")
     print(y0)
+    print("Noised Features:")
+    print(yN)
     print("Jacobian:")
     print(J)
     print("Hessian:")
